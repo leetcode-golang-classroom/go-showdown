@@ -5,7 +5,7 @@ import (
 )
 
 func main() {
-	hp := showdown.NewHumanPlayer()
+	hp := showdown.NewAIPlayer()
 	hp1 := showdown.NewAIPlayer()
 	hp2 := showdown.NewAIPlayer()
 	hp3 := showdown.NewAIPlayer()

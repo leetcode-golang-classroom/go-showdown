@@ -110,11 +110,15 @@ func (g *Game) ShowTurnResult(turnResult map[int]*Card, maxIdx int, turn int) {
 }
 func (g *Game) JudgeWin() {
 	// find out the winner and display
+	// show all user
+	for _, player := range g.players {
+		fmt.Printf("user: %s, point: %v\n", player.GetData().name, player.GetData().point)
+	}
 	winners := []Player{g.players[0]}
 	for idx := 1; idx < len(g.players); idx++ {
-		if winners[0].GetData().GetPoint() < g.players[idx].GetData().GetPoint() {
-			winners[0] = g.players[idx]
-		} else if winners[0].GetData().GetPoint() == g.players[idx].GetData().GetPoint() {
+		if winners[0].GetData().point < g.players[idx].GetData().point {
+			winners = []Player{g.players[idx]}
+		} else if winners[0].GetData().point == g.players[idx].GetData().point {
 			winners = append(winners, g.players[idx])
 		}
 	}
@@ -127,7 +131,7 @@ func (g *Game) JudgeWin() {
 			if idx != len(winners)-1 {
 				fmt.Print(",")
 			} else {
-				fmt.Printf(", point:%v\n", winner.GetData().point)
+				fmt.Printf(", point:%v\n", winners[0].GetData().point)
 			}
 		}
 	}
