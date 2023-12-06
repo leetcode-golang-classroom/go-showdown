@@ -23,7 +23,7 @@ var ranks = []string{
 }
 
 func (c *Card) String() string {
-	return fmt.Sprintf("rank: %v, suit: %v ", ranks[c.rank-2], suits[c.suit])
+	return fmt.Sprintf("[rank: %v, suit: %v]", ranks[c.rank-2], suits[c.suit])
 }
 
 type Rank int

@@ -3,14 +3,14 @@ package showdown
 import "fmt"
 
 type Game struct {
-	exchangeHands []ExchangeHands
+	exchangeHands []*ExchangeHands
 	deck          *Deck
 	players       []Player
 }
 
 func NewGame(players []Player) *Game {
 	return &Game{
-		exchangeHands: []ExchangeHands{},
+		exchangeHands: []*ExchangeHands{},
 		deck:          NewDeck(),
 		players:       players,
 	}
@@ -34,14 +34,21 @@ func (g *Game) DrawCards() {
 		}
 	}
 }
-func (g *Game) ExchangeLogic(targetPlayer Player, players []Player, self int) bool {
+func (g *Game) AddExchanges(exh *ExchangeHands) {
+	g.exchangeHands = append(g.exchangeHands, exh)
+}
+func (g *Game) ResetExchangesResult(exhs []*ExchangeHands) {
+	g.exchangeHands = exhs
+}
+func (g *Game) ExchangeLogic(targetPlayer Player, players []Player, self int) (bool, *ExchangeHands) {
 	isExchange := targetPlayer.DecideExchange()
+	var exchangeResult *ExchangeHands
 	if isExchange {
 		i := targetPlayer.ChooseExchange(self)
-		targetPlayer.ExchangeHands(players[i])
+		exchangeResult = targetPlayer.ExchangeHands(players[i])
 		targetPlayer.GetData().SetHasExchangedHand(true)
 	}
-	return isExchange
+	return isExchange, exchangeResult
 }
 func (g *Game) TakeTurn() {
 	// take turn for each player
@@ -50,17 +57,29 @@ func (g *Game) TakeTurn() {
 		var maxCard *Card
 		maxIdx := 0
 		// check exchangehands countdown
+		// collect not finished task
+		notFinishedExchanges := []*ExchangeHands{}
 		for _, exchangehand := range g.exchangeHands {
-			exchangehand.CountDown()
+			if exchangehand.IsTimeout() {
+				continue
+			} else {
+				exchangehand.CountDown()
+				if !exchangehand.IsTimeout() {
+					notFinishedExchanges = append(notFinishedExchanges, exchangehand)
+				}
+			}
 		}
+		g.ResetExchangesResult(notFinishedExchanges)
 		// check if need exchange
 		for idx, player := range g.players {
 			isExchange := false
 			isShowCard := true
 			hasExchangedHande := player.GetData().GetHasExchangedHand()
 			if !hasExchangedHande {
-				isExchange = g.ExchangeLogic(player, g.players, idx)
+				var exchangeResult *ExchangeHands
+				isExchange, exchangeResult = g.ExchangeLogic(player, g.players, idx)
 				if isExchange {
+					g.AddExchanges(exchangeResult)
 					isShowCard = player.DecideShow()
 				}
 			}
@@ -91,11 +110,26 @@ func (g *Game) ShowTurnResult(turnResult map[int]*Card, maxIdx int, turn int) {
 }
 func (g *Game) JudgeWin() {
 	// find out the winner and display
-	winner := g.players[0]
+	winners := []Player{g.players[0]}
 	for idx := 1; idx < len(g.players); idx++ {
-		if winner.GetData().GetPoint() < g.players[idx].GetData().GetPoint() {
-			winner = g.players[idx]
+		if winners[0].GetData().GetPoint() < g.players[idx].GetData().GetPoint() {
+			winners[0] = g.players[idx]
+		} else if winners[0].GetData().GetPoint() == g.players[idx].GetData().GetPoint() {
+			winners = append(winners, g.players[idx])
 		}
 	}
-	fmt.Printf("winner is %s, point:%v\n", winner.GetData().name, winner.GetData().point)
+	if len(winners) == 1 {
+		fmt.Printf("winner is %s, point:%v\n", winners[0].GetData().name, winners[0].GetData().point)
+	} else {
+		fmt.Print("winners are ")
+		for idx, winner := range winners {
+			fmt.Printf("%s", winner.GetData().name)
+			if idx != len(winners)-1 {
+				fmt.Print(",")
+			} else {
+				fmt.Printf(", point:%v\n", winner.GetData().point)
+			}
+		}
+	}
+
 }

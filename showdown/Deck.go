@@ -46,10 +46,10 @@ func (s *Deck) DrawCard(player Player) {
 	rand.NewSource(time.Now().UnixNano())
 	idx := rand.Intn(len(s.cards))
 	temp := s.cards[idx]
-	if idx >= 1 {
-		s.cards = append(s.cards[:idx-1], s.cards[idx:]...)
-	} else {
-		s.cards = append([]*Card{}, s.cards[1:]...)
+	if idx < len(s.cards)-1 {
+		s.cards = append(s.cards[:idx], s.cards[idx+1:]...)
+	} else if idx == len(s.cards)-1 {
+		s.cards = append([]*Card{}, s.cards[:idx]...)
 	}
 
 	player.AddHands(temp)

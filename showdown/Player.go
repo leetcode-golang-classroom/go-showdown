@@ -54,10 +54,10 @@ func (pd *PlayerData) ExchangeHands(player Player) {
 
 func (pd *PlayerData) ExtractCard(idx int) *Card {
 	temp := pd.hands[idx]
-	if idx >= 1 {
-		pd.hands = append(pd.hands[:idx-1], pd.hands[idx:]...)
+	if idx < len(pd.hands)-1 {
+		pd.hands = append(pd.hands[:idx], pd.hands[idx+1:]...)
 	} else {
-		pd.hands = append([]*Card{}, pd.hands[1:]...)
+		pd.hands = append([]*Card{}, pd.hands[:idx]...)
 	}
 	return temp
 }

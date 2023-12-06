@@ -26,3 +26,7 @@ func (exh *ExchangeHands) CountDown() {
 		exh.exchangeBack()
 	}
 }
+
+func (exh *ExchangeHands) IsTimeout() bool {
+	return exh.changeBackCountDown == 0
+}
