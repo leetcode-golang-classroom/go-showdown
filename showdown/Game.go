@@ -65,36 +65,45 @@ func (g *Game) ExchangeCountDown() {
 	}
 	g.ResetExchangesResult(notFinishedExchanges)
 }
-func (g *Game) RunTurn() (map[int]*Card, int) {
-	turnResult := make(map[int]*Card)
-	var maxCard *Card
-	maxIdx := 0
-	for idx, player := range g.players {
-		isExchange := false
-		isShowCard := true
-		hasExchangedHande := player.GetData().GetHasExchangedHand()
-		if !hasExchangedHande {
-			var exchangeResult *ExchangeHands
-			// check if need exchange
-			isExchange, exchangeResult = g.ExchangeLogic(player, g.players, idx)
-			if isExchange {
-				g.AddExchanges(exchangeResult)
-				isShowCard = player.DecideShow()
-			}
-		}
-		if isShowCard && len(player.GetData().hands) > 0 {
-			currentCard := player.ChooseHandCard()
-			turnResult[idx] = currentCard
-			if maxCard == nil {
-				maxCard = currentCard
-			}
-			if maxCard != currentCard && maxCard.Compare(currentCard) {
-				maxCard = currentCard
-				maxIdx = idx
-			}
+func (g *Game) HandleExchange(player Player, playerIdx int) bool {
+	isExchange := false
+	isShowCard := true
+	hasExchangedHand := player.GetData().GetHasExchangedHand()
+	if !hasExchangedHand {
+		var exchangeResult *ExchangeHands
+		// check if need exchange
+		isExchange, exchangeResult = g.ExchangeLogic(player, g.players, playerIdx)
+		if isExchange {
+			g.AddExchanges(exchangeResult)
+			isShowCard = player.DecideShow()
 		}
 	}
-	return turnResult, maxIdx
+	return isShowCard
+}
+func (g *Game) HandleShowCardAndCalculateMaxLogic(player Player, playerIdx int, turnRecords map[int]*Card, maxCard *Card, isShowCard bool, winnerIdx int) (int, *Card) {
+	if isShowCard && len(player.GetData().hands) > 0 {
+		currentCard := player.ChooseHandCard()
+		turnRecords[playerIdx] = currentCard
+		if maxCard == nil {
+			maxCard = currentCard
+		}
+		if maxCard != currentCard && maxCard.Compare(currentCard) {
+			maxCard = currentCard
+			winnerIdx = playerIdx
+		}
+	}
+	return winnerIdx, maxCard
+}
+func (g *Game) RunTurn(turn int) *Turn {
+	turnRecords := make(map[int]*Card)
+	var maxCard *Card
+	winnerIdx := 0
+	for idx, player := range g.players {
+		// handle exchange logic
+		isShowCard := g.HandleExchange(player, idx)
+		winnerIdx, maxCard = g.HandleShowCardAndCalculateMaxLogic(player, idx, turnRecords, maxCard, isShowCard, winnerIdx)
+	}
+	return NewTurn(turnRecords, winnerIdx, turn)
 }
 func (g *Game) GainPoint(maxIdx int) {
 	orginPoint := g.players[maxIdx].GetData().GetPoint()
@@ -105,25 +114,18 @@ func (g *Game) TakeTurn() {
 	for turn := 1; turn <= 13; turn++ {
 		// check exchangehands countdown
 		g.ExchangeCountDown()
-		turnResult, winnerIdx := g.RunTurn()
+		turnRecords := g.RunTurn(turn)
 		// show result
-		g.ShowTurnResult(turnResult, winnerIdx, turn)
-		g.GainPoint(winnerIdx)
+		turnRecords.ShowTurnResult(g)
+		g.GainPoint(turnRecords.winnerIdx)
 	}
 }
-func (g *Game) ShowTurnResult(turnResult map[int]*Card, maxIdx int, turn int) {
-	fmt.Printf("the %v's turn\n", turn)
-	for pidx, card := range turnResult {
-		fmt.Printf("Player Name: %s, Card: %v\n", g.players[pidx].GetData().name, card)
-	}
-	fmt.Printf("turn winner is %v\n", g.players[maxIdx].GetData().name)
-}
-func (g *Game) JudgeWin() {
-	// find out the winner and display
-	// show all user
+func (g *Game) ShowAllPlayers() {
 	for _, player := range g.players {
 		fmt.Printf("user: %s, point: %v\n", player.GetData().name, player.GetData().point)
 	}
+}
+func (g *Game) FindWinners() []Player {
 	winners := []Player{g.players[0]}
 	for idx := 1; idx < len(g.players); idx++ {
 		if winners[0].GetData().point < g.players[idx].GetData().point {
@@ -132,18 +134,28 @@ func (g *Game) JudgeWin() {
 			winners = append(winners, g.players[idx])
 		}
 	}
+	return winners
+}
+func (g *Game) ShowWinners(winners []Player) {
 	if len(winners) == 1 {
 		fmt.Printf("winner is %s, point:%v\n", winners[0].GetData().name, winners[0].GetData().point)
-	} else {
-		fmt.Print("winners are ")
-		for idx, winner := range winners {
-			fmt.Printf("%s", winner.GetData().name)
-			if idx != len(winners)-1 {
-				fmt.Print(",")
-			} else {
-				fmt.Printf(", point:%v\n", winners[0].GetData().point)
-			}
+		return
+	}
+	fmt.Print("winners are ")
+	for idx, winner := range winners {
+		fmt.Printf("%s", winner.GetData().name)
+		if idx != len(winners)-1 {
+			fmt.Print(",")
+		} else {
+			fmt.Printf(", point:%v\n", winners[0].GetData().point)
 		}
 	}
+}
+func (g *Game) JudgeWin() {
+	// find out the winner and display
+	// show all user
+	g.ShowAllPlayers()
+	winners := g.FindWinners()
+	g.ShowWinners(winners)
 
 }
