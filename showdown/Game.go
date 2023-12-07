@@ -50,55 +50,65 @@ func (g *Game) ExchangeLogic(targetPlayer Player, players []Player, self int) (b
 	}
 	return isExchange, exchangeResult
 }
+func (g *Game) ExchangeCountDown() {
+	// collect not finished task
+	notFinishedExchanges := []*ExchangeHands{}
+	for _, exchangehand := range g.exchangeHands {
+		if exchangehand.IsTimeout() {
+			continue
+		} else {
+			exchangehand.CountDown()
+			if !exchangehand.IsTimeout() {
+				notFinishedExchanges = append(notFinishedExchanges, exchangehand)
+			}
+		}
+	}
+	g.ResetExchangesResult(notFinishedExchanges)
+}
+func (g *Game) RunTurn() (map[int]*Card, int) {
+	turnResult := make(map[int]*Card)
+	var maxCard *Card
+	maxIdx := 0
+	for idx, player := range g.players {
+		isExchange := false
+		isShowCard := true
+		hasExchangedHande := player.GetData().GetHasExchangedHand()
+		if !hasExchangedHande {
+			var exchangeResult *ExchangeHands
+			// check if need exchange
+			isExchange, exchangeResult = g.ExchangeLogic(player, g.players, idx)
+			if isExchange {
+				g.AddExchanges(exchangeResult)
+				isShowCard = player.DecideShow()
+			}
+		}
+		if isShowCard && len(player.GetData().hands) > 0 {
+			currentCard := player.ChooseHandCard()
+			turnResult[idx] = currentCard
+			if maxCard == nil {
+				maxCard = currentCard
+			}
+			if maxCard != currentCard && maxCard.Compare(currentCard) {
+				maxCard = currentCard
+				maxIdx = idx
+			}
+		}
+	}
+	return turnResult, maxIdx
+}
+func (g *Game) GainPoint(maxIdx int) {
+	orginPoint := g.players[maxIdx].GetData().GetPoint()
+	g.players[maxIdx].GetData().SetPoint(orginPoint + 1)
+}
 func (g *Game) TakeTurn() {
 	// take turn for each player
 	for turn := 1; turn <= 13; turn++ {
-		turnResult := make(map[int]*Card)
-		var maxCard *Card
-		maxIdx := 0
 		// check exchangehands countdown
-		// collect not finished task
-		notFinishedExchanges := []*ExchangeHands{}
-		for _, exchangehand := range g.exchangeHands {
-			if exchangehand.IsTimeout() {
-				continue
-			} else {
-				exchangehand.CountDown()
-				if !exchangehand.IsTimeout() {
-					notFinishedExchanges = append(notFinishedExchanges, exchangehand)
-				}
-			}
-		}
-		g.ResetExchangesResult(notFinishedExchanges)
-		// check if need exchange
-		for idx, player := range g.players {
-			isExchange := false
-			isShowCard := true
-			hasExchangedHande := player.GetData().GetHasExchangedHand()
-			if !hasExchangedHande {
-				var exchangeResult *ExchangeHands
-				isExchange, exchangeResult = g.ExchangeLogic(player, g.players, idx)
-				if isExchange {
-					g.AddExchanges(exchangeResult)
-					isShowCard = player.DecideShow()
-				}
-			}
-			if isShowCard && len(player.GetData().hands) > 0 {
-				currentCard := player.ChooseHandCard()
-				turnResult[idx] = currentCard
-				if maxCard == nil {
-					maxCard = currentCard
-				}
-				if maxCard != currentCard && maxCard.Compare(currentCard) {
-					maxCard = currentCard
-					maxIdx = idx
-				}
-			}
-		}
+		g.ExchangeCountDown()
+		turnResult, winnerIdx := g.RunTurn()
 		// show result
-		g.ShowTurnResult(turnResult, maxIdx, turn)
-		orginPoint := g.players[maxIdx].GetData().GetPoint()
-		g.players[maxIdx].GetData().SetPoint(orginPoint + 1)
+		g.ShowTurnResult(turnResult, winnerIdx, turn)
+		g.GainPoint(winnerIdx)
 	}
 }
 func (g *Game) ShowTurnResult(turnResult map[int]*Card, maxIdx int, turn int) {
