@@ -1,6 +1,9 @@
 package showdown
 
-import "fmt"
+import (
+	"fmt"
+	"sort"
+)
 
 type Player interface {
 	ChooseHandCard() *Card
@@ -71,4 +74,9 @@ func NewPlayerData() *PlayerData {
 }
 func (pd *PlayerData) String() string {
 	return fmt.Sprintf("name: %s, point: %v, hasExchangedHand: %v,\n%v", pd.name, pd.point, pd.hasExchangedHand, pd.hands)
+}
+func (pd *PlayerData) SortHands() {
+	sort.Slice(pd.hands, func(i, j int) bool {
+		return !pd.hands[i].Compare(pd.hands[j])
+	})
 }

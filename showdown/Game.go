@@ -31,6 +31,9 @@ func (g *Game) DrawCards() {
 			if g.deck.HasCards() {
 				g.deck.DrawCard(player)
 			}
+			if idx == 12 {
+				player.GetData().SortHands()
+			}
 		}
 	}
 }

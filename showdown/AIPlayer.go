@@ -52,7 +52,6 @@ func (aip *AIPlayer) ChooseHandCard() *Card {
 	rand.NewSource(time.Now().UnixNano())
 	idx := 0
 	if len(aip.GetData().hands) > 1 {
-		idx = rand.Intn(len(aip.GetData().hands))
 		return aip.GetData().ExtractCard(idx)
 	}
 	temp := aip.GetData().hands[0]

@@ -12,10 +12,10 @@ func (c *Card) Compare(card *Card) bool {
 }
 
 var suits = []string{
-	"Club",
-	"Diamand",
-	"Heart",
-	"Spade",
+	"♣",
+	"♦",
+	"♥",
+	"♠",
 }
 var ranks = []string{
 	"2", "3", "4", "5", "6", "7", "8", "9", "10",
@@ -23,7 +23,7 @@ var ranks = []string{
 }
 
 func (c *Card) String() string {
-	return fmt.Sprintf("[rank: %v, suit: %v]", ranks[c.rank-2], suits[c.suit])
+	return fmt.Sprintf("[%v%v]", ranks[c.rank-2], suits[c.suit])
 }
 
 type Rank int

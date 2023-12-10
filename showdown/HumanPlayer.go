@@ -31,7 +31,7 @@ func (hp *HumanPlayer) ChooseHandCard() *Card {
 	var idx int
 	answerIsInRange := false
 	for !answerIsInRange {
-		fmt.Printf("Choose Card to Show:")
+		fmt.Printf("%v, Choose Card to Show:", hp.data.name)
 		fmt.Scan(&idx)
 		answerIsInRange = idx >= 0 && idx < len(hp.GetData().hands)
 	}
@@ -46,7 +46,7 @@ func (hp *HumanPlayer) DecideName() string {
 }
 
 func (hp *HumanPlayer) DecideShow() bool {
-	fmt.Printf("Show the card or Not:(Y/N)?")
+	fmt.Printf("%v, Show the card or Not:(Y/N)?", hp.data.name)
 	var isShowCard string
 	fmt.Scan(&isShowCard)
 
@@ -54,7 +54,7 @@ func (hp *HumanPlayer) DecideShow() bool {
 }
 
 func (hp *HumanPlayer) DecideExchange() bool {
-	fmt.Printf("Exchange hands or not:(Y/N)?")
+	fmt.Printf("%v, Exchange hands or not:(Y/N)?", hp.data.name)
 	var isExchange string
 	fmt.Scan(&isExchange)
 	return strings.Compare(isExchange, "Y") == 0
@@ -64,7 +64,7 @@ func (hp *HumanPlayer) ChooseExchange(self int) int {
 	var targetPlayerNumber int
 	answerIsInRange := false
 	for !answerIsInRange {
-		fmt.Printf("Choose hands or not:(0-3) other than %v?", self)
+		fmt.Printf("%v, Choose hands or not:(0-3) other than %v?", hp.data.name, self)
 		fmt.Scan(&targetPlayerNumber)
 		answerIsInRange = targetPlayerNumber >= 0 && targetPlayerNumber < 4 && self != targetPlayerNumber
 	}
